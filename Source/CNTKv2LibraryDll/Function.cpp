@@ -1370,7 +1370,7 @@ namespace CNTK
         case PrimitiveOpType::ROIPooling:
         {
             auto roiOutputShape = functionConfig[PrimitiveFunction::AttributeNameROIOutputShape].Value<NDShape>();
-            computationNodePtr = New<ROIPoolingNode<ElementType>>(network->GetDeviceId(), functionName, AsTensorShape(roiOutputShape));
+            computationNodePtr = New<ROIPoolingNode<ElementType>>(network->GetDeviceId(), internalNodeName, AsTensorShape(roiOutputShape));
             break;
         }
         case PrimitiveOpType::Pooling:
