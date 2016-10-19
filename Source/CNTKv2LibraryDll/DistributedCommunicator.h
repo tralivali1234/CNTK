@@ -68,7 +68,6 @@ namespace CNTK
         virtual ~MPICommunicatorImpl() {}
 
     private:
-        void CheckWorkers(const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers);
         void Initialize(const std::vector<NDArrayViewPtr>& values);
 
         void AggregateImpl(
@@ -92,22 +91,30 @@ namespace CNTK
         std::vector<std::shared_ptr<Microsoft::MSR::CNTK::GPUDataTransferer>> m_gpuDataTransferers;
 
     protected:
-        inline size_t GetBufferSize(const NDArrayViewPtr& viewPtr)
+        DeviceDescriptor GetNonCPUDevice(const std::vector<NDArrayViewPtr>& values)
+        {
+            auto device = std::find_if(values.begin(), values.end(), [](const NDArrayViewPtr v) { return v->Device().Type() != DeviceKind::CPU; });
+            return values.end() == device ? DeviceDescriptor::CPUDevice() : (*device)->Device();
+        }
+
+        size_t GetBufferSize(const NDArrayViewPtr& viewPtr)
         {
             return viewPtr->Shape().TotalSize() * DataTypeSize(viewPtr->GetDataType());
         }
 
         template <typename ElementType>
-        inline std::shared_ptr<const Microsoft::MSR::CNTK::Matrix<ElementType>> GetMatrix(const NDArrayViewPtr& arrayView)
+        std::shared_ptr<const Microsoft::MSR::CNTK::Matrix<ElementType>> GetMatrix(const NDArrayViewPtr& arrayView)
         {
             return arrayView->GetMatrix<ElementType>();
         }
 
         template <typename ElementType>
-        inline std::shared_ptr<Microsoft::MSR::CNTK::Matrix<ElementType>> GetWritableMatrix(const NDArrayViewPtr& arrayView)
+        std::shared_ptr<Microsoft::MSR::CNTK::Matrix<ElementType>> GetWritableMatrix(const NDArrayViewPtr& arrayView)
         {
             return arrayView->GetWritableMatrix<ElementType>();
         }
+
+        void CheckWorkers(const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers);
 
         Microsoft::MSR::CNTK::MPIWrapperPtr m_mpi;
     };

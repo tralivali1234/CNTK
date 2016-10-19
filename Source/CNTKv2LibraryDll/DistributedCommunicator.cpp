@@ -58,12 +58,6 @@ namespace CNTK
         return nullptr; // Make compiler happy.
     }
 
-    inline DeviceDescriptor GetNonCPUDevice(const std::vector<NDArrayViewPtr>& values)
-    {
-        auto device = std::find_if(values.begin(), values.end(), [](const NDArrayViewPtr v) { return v ->Device().Type() != DeviceKind::CPU; });
-        return values.end() == device ? DeviceDescriptor::CPUDevice() : (*device)->Device();
-    }
-
     MPICommunicatorImpl::MPICommunicatorImpl()
     {
         m_mpi = MPIWrapper::s_initialized ? MPIWrapper::GetInstance() : std::make_shared<MPIWrapper>();;
