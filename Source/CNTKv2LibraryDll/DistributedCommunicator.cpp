@@ -17,6 +17,16 @@ using namespace Microsoft::MSR::CNTK;
 
 namespace CNTK
 {
+    void Recreate(const std::vector<NDArrayViewPtr>& values, std::vector<NDArrayViewPtr>& output)
+    {
+        output.resize(values.size());
+        for (size_t i = 0; i < values.size(); ++i)
+        {
+            const auto inputView = values[i];
+            output[i] = MakeSharedObject<NDArrayView>(inputView->GetDataType(), inputView->Shape(), inputView->Device());
+        }
+    }
+
     DistributedCommunicatorPtr MPICommunicator()
     {
         return std::make_shared<MPICommunicatorImpl>();
@@ -138,6 +148,8 @@ namespace CNTK
         {
             NOT_IMPLEMENTED;
         }
+
+        Recreate(values, outputValues);
 
         auto device = GetNonCPUDevice(values);
         if (device.Type() != DeviceKind::CPU)
@@ -319,11 +331,30 @@ namespace CNTK
         }
     }
 
-    void MPICommunicatorImpl::QuantizedAggregate(const std::vector<NDArrayViewPtr>& /*inValues*/,
-        const std::vector<NDArrayViewPtr>& /*inPreviousQuantizationResidues*/,
-        const std::unordered_set<DistributedWorkerDescriptor>& /*sendToWorkers*/,
-        const std::vector<NDArrayViewPtr>& /*aggregatedOutputs*/,
-        const std::vector<NDArrayViewPtr>& /*newQuantizationResidues*/)
+    void MPICommunicatorImpl::QuantizedAggregateInPlace(
+        std::vector<NDArrayViewPtr>& inValues,
+        std::vector<NDArrayViewPtr>& valueQuantizationResidues,
+        std::vector<NDArrayViewPtr>& stripeQuantizationResidues,
+        const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers)
+    {
+        QuantizedAggregate(
+            inValues,
+            valueQuantizationResidues,
+            stripeQuantizationResidues,
+            inValues,
+            valueQuantizationResidues,
+            stripeQuantizationResidues,
+            sendToWorkers);
+    }
+
+    void MPICommunicatorImpl::QuantizedAggregate(
+        const std::vector<NDArrayViewPtr>& /*inValues*/,
+        const std::vector<NDArrayViewPtr>& /*valueQuantizationResidues*/,
+        const std::vector<NDArrayViewPtr>& /*stripeQuantizationResidues*/,
+        std::vector<NDArrayViewPtr>& /*aggregatedOutputs*/,
+        std::vector<NDArrayViewPtr>& /*newQuantizationResidues*/,
+        std::vector<NDArrayViewPtr>& /*newStripeQuantizationResidues*/,
+        const std::unordered_set<DistributedWorkerDescriptor>& /*sendToWorkers*/)
     {
         NOT_IMPLEMENTED;
     }
