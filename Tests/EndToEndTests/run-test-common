@@ -7,6 +7,8 @@
 
 BinaryPath=$TEST_CNTK_BINARY
 
+export V2_LIB_TESTING=1
+
 if [ "$TEST_DEVICE" == "cpu" ]; then
   CNTKDeviceId=-1
 elif [ "$TEST_DEVICE" == "gpu" ]; then
@@ -136,6 +138,21 @@ cntkmpirun()
 
   cntkrun "$2" "$3"
   return $?
+}
+
+#Function to check/copy original baselines
+# checkOriginalBaseline <original baseline relative dir> <target dir>
+checkOriginalBaseline()
+{
+  TargetPath=$1
+  OriginRelativePath=$2
+  
+  (cd $TargetPath/$OriginRelativePath && md5sum baseline*) | (cd $TargetPath && md5sum --status -c -)
+  if [ $? != 0 ]; then
+    echo Error: Baselines must match original test. Copy from $OriginalTestDir.
+    exit 1
+    #cp $TargetPath/$OriginRelativePath/baseline* $TargetPath
+  fi
 }
 
 # place printHardwareInfo here, so that all tests print it
